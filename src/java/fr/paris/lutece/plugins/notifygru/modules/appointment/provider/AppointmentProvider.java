@@ -58,6 +58,8 @@ import fr.paris.lutece.plugins.genericattributes.business.Entry;
 import fr.paris.lutece.plugins.genericattributes.business.EntryFilter;
 import fr.paris.lutece.plugins.genericattributes.business.EntryHome;
 import fr.paris.lutece.plugins.genericattributes.business.Response;
+import fr.paris.lutece.plugins.genericattributes.service.entrytype.EntryTypeServiceManager;
+import fr.paris.lutece.plugins.genericattributes.service.entrytype.IEntryTypeService;
 import fr.paris.lutece.plugins.workflow.modules.comment.business.CommentValue;
 import fr.paris.lutece.plugins.workflow.modules.comment.service.CommentValueService;
 import fr.paris.lutece.plugins.workflow.modules.comment.service.ICommentValueService;
@@ -280,11 +282,17 @@ public class AppointmentProvider implements IProvider
         List<Response> listResponses = AppointmentResponseService.findListResponse( _appointment.getIdAppointment( ) );
         for ( Response response : listResponses )
         {
-            Entry entry = EntryHome.findByPrimaryKey( response.getEntry( ).getIdEntry( ) );
-            collectionNotifyMarkers
-                    .add( createMarkerValues( AppointmentNotifyGruConstants.MARK_ENTRY_BASE + entry.getIdEntry( ), response.getResponseValue( ) ) );
-        }
+            IEntryTypeService entryTypeService = EntryTypeServiceManager.getEntryTypeService( response.getEntry( ) );
+            // Retrieve the value of the Response, depending on the EntryType
+            String responseRecapValue = entryTypeService.getResponseValueForRecap( response.getEntry( ), null, response, LocaleService.getDefault( ) );
 
+            if ( responseRecapValue == null )
+            {
+                responseRecapValue = StringUtils.EMPTY;
+            }
+            collectionNotifyMarkers
+                    .add( createMarkerValues( AppointmentNotifyGruConstants.MARK_ENTRY_BASE + response.getEntry( ).getIdEntry( ), responseRecapValue ) );
+        }
         return collectionNotifyMarkers;
     }
 
